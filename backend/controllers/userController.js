@@ -15,7 +15,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   if (userExists) {
     res.status(400);
-    throw new Errro("Email already taken.");
+    throw new Error("Email already taken.");
   }
 
   //Hash password
@@ -33,6 +33,7 @@ const registerUser = asyncHandler(async (req, res) => {
       _id: user.id,
       name: user.name,
       email: user.email,
+      token: generateToken(user.id),
     });
   } else {
     res.status(400);
@@ -51,6 +52,7 @@ const loginUser = asyncHandler(async (req, res) => {
       _id: user.id,
       name: user.name,
       email: user.email,
+      token: generateToken(user.id),
     });
   } else {
     res.status(400);
@@ -59,8 +61,20 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 const getMe = asyncHandler(async (req, res) => {
-  res.json({ message: "User data" });
+  const { _id, name, email } = await User.findById(req.user.id);
+  res.status(200).json({
+    id: _id,
+    name,
+    email,
+  });
 });
+
+//Generate JWT
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: "1d",
+  });
+};
 
 module.exports = {
   registerUser,
